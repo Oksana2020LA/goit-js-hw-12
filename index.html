@@ -5,25 +5,34 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Homework 12</title>
-
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;1,500;1,600&display=swap"
+      rel="stylesheet"
+    />
     
     <script type="module" crossorigin src="/goit-js-hw-12/commonHelpers.js"></script>
-    <link rel="modulepreload" crossorigin href="/goit-js-hw-12/assets/vendor-5b791d57.js">
-    <link rel="stylesheet" href="/goit-js-hw-12/assets/vendor-cf6910df.css">
-    <link rel="stylesheet" href="/goit-js-hw-12/assets/index-e9fcce96.css">
+    <link rel="modulepreload" crossorigin href="/goit-js-hw-12/assets/vendor-b42c18af.js">
+    <link rel="stylesheet" href="/goit-js-hw-12/assets/vendor-a51daae5.css">
+    <link rel="stylesheet" href="/goit-js-hw-12/assets/index-9ba3bfa3.css">
   </head>
 
   <body>
-    <section>
-      <form class="form">
-        <input class="input" name="image" type="text" required />
-        <button class="button" type="submit">Search</button>
-      </form>
+    <form class="form">
+      <input type="text" name="search" placeholder="Search images..." />
+      <button class="search-btn" type="submit">Search</button>
+    </form>
+
+    <div class="gallery-box">
+      <span class="loader-top"></span>
       <ul class="gallery"></ul>
-    </section>
-    <div class="loader"></div>
+    </div>
+    <div class="loader-bottom-box">
+      <span class="loader-bottom"> </span>
+      <button type="button" class="load-image">Load more</button>
+    </div>
 
     
-    <script src="iziToast.min.js" type="text/javascript"></script>
   </body>
 </html>
