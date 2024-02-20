@@ -1,92 +1,144 @@
-import iziToast from "izitoast";
-import "izitoast/dist/css/iziToast.min.css";
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
+import axios from 'axios';
 
-const API_KEY = '42179520-d47d5bd3a5ac50ed017a72958';
-const BASE_URL = 'https://pixabay.com/api/';
+const pageForm = document.querySelector(".form");
+const pageLoaderTop = document.querySelector(".loader-top");
+const pageLoaderBottom = document.querySelector(".loader-bottom");
+const pageGallery = document.querySelector(".gallery");
+const pageLoadImg = document.querySelector(".load-image");
 
-const form = document.querySelector('.form');
-const galery = document.querySelector('.gallery');
-const spinner = document.querySelector('.loader');
+let page = 1;
+let q = "cat";
+let per_page = 15;
 
-spinner.style.display = 'none';
-
-
-
-form.addEventListener('submit', onFormSubmit);
-
-function onFormSubmit(ev) {
-    ev.preventDefault();
-    spinner.style.display = 'block';
-    galery.innerHTML = '';
-    const selectedPicture = ev.target.image.value;
-    fetchImages(selectedPicture).then(images => {
-        handleWithResponce(images);
-    }).catch(error => console.log(error))
-}
-
-function fetchImages(image) {
-    const searchParams = new URLSearchParams({
-        key: API_KEY,
-        image_type: "photo",
-        orientation: 'horizontal',
-        safesearch: true,
+const lightbox = new SimpleLightbox(".gallery a", {
+    captionsData: "alt",
+    captionDelay: 250,
+    nav: true,
+    close: true,
+    enableKeyboard: true,
+    docClose: true
     });
 
-    return fetch(`${BASE_URL}?${searchParams}&q=${image}`).then(response => {
-        if (!response.ok) {
-            throw new Error(response.status)
-        }
-        return response.json();
-    })
-}
+pageForm.addEventListener("submit", onSubmit);
+pageLoadImg.addEventListener("click", loadMore);
 
-function handleWithResponce(images) {
-    if (!images.total) {
-        iziToast.error({
-            position: 'topRight',
-            message: 'Sorry, there are no images matching your search query. Please try again!',
-            timeout: 2000,
-        });
-        spinner.style.display = 'none';
-        return
+async function onSubmit(event) {
+    event.preventDefault();
+    pageLoaderTop.style.display = "block";
+    pageLoadImg.style.display = "none";
+    page = 1;
+    q = event.target.elements.search.value.trim();
+    
+    if (!q) {
+    pageGallery.innerHTML = '';
+    iziToast.info({
+    position: "topRight",
+    message: `Error enter any symbols`,
+    });
+    pageLoaderTop.style.display = "none";
+    return;
     }
+    
+    try {
+    const {
+    data: { hits, totalHits },
+    } = await searchImg(q, page);
+        
+    if (hits.length > 0) {
+    pageLoaderTop.style.display = "none";
+    pageGallery.innerHTML = renderImg(hits);
+    lightbox.refresh();
     iziToast.success({
-        position: 'topRight',
-        message: `Congratulations! We found ${images.total} images`,
+    position: "topRight",
+    message: `We found ${totalHits} photos`,
+    });
+    pageLoadImg.style.display = "block";
+    } else {
+    pageGallery.innerHTML = '';
+    iziToast.error({
+        position: "topRight",
+        message: `Sorry, there are no images matching your search query. Please try again!`,
         timeout: 2000,
     });
-    renderGallery(images.hits);
-    spinner.style.display = 'none';
-    const galleryLightBox = new SimpleLightbox('.gallery a', { captionsData: 'alt', captionDelay: 250 });
-    galleryLightBox.refresh();
+        }
+        
+        if (totalHits <= per_page) {
+            pageLoadImg.style.display = "none";
+    }
+    } catch (error) {
+        console.log("Error");
+    } finally {
+        pageLoaderTop.style.display = "none";
+        event.target.reset();
+    }
 }
 
+function searchImg(q, page) {
+    axios.defaults.baseURL = "https://pixabay.com";
+    
+    return axios.get("/api/", {
+        params: {
+            key: "42179520-d47d5bd3a5ac50ed017a72958",
+            q,
+            image_type: "photo",
+            orientation: "horizontal",
+            safesearch: true,
+            page,
+            per_page: 15,
+        },
+    });
+}
 
-function renderGallery(images) {
-    const markup = images.map(({ webformatURL, largeImageURL, tags, likes, comments, downloads, views }) => `<li class='gallery-item'>
-    <a class="gallery-link" href="${largeImageURL}">
-        <img class="gallery-image" src="${webformatURL}" alt="${tags}" />
-        <div class="gallery-description">
-      <span class='gallery-span'>
-        <div class="upper-text">Likes</div>
-        <div class="lower-text">${likes}</div>
-      </span>
-      <span class='gallery-span'>
-        <div class="upper-text">Views</div>
-        <div class="lower-text">${views}</div>
-      </span>
-      <span class='gallery-span'>
-        <div class="upper-text">Comments</div>
-        <div class="lower-text">${comments}</div>
-      </span>
-      <span class='gallery-span'>
-        <div class="upper-text">Downloads</div>
-        <div class="lower-text">${downloads}</div>
-      </span>
-      </div>
-        </a>
-</li>`).join('');
-    galery.insertAdjacentHTML('beforeend', markup);
+function renderImg(hits = []) {
+    return hits.reduce((html, hit) => {
+        return (html +
+            `<li class="gallery-item">
+            <a href=${hit.largeImageURL}>
+            <img class="gallery-img" src =${hit.webformatURL} alt=${hit.tags}/>
+            </a>
+            <div class="gallery-text-box">
+            <p>Likes: <span class="text-value">${hit.likes}</span></p>
+            <p>views: <span class="text-value">${hit.views}</span></p>
+            <p>comments: <span class="text-value">${hit.comments}</span></p>
+            <p>downloads: <span class="text-value">${hit.downloads}</span></p>
+            </div>
+            </li>`);
+    }, '');
+}
+
+async function loadMore(event) {
+    pageLoaderBottom.style.display = "block";
+    pageLoadImg.style.display = "none";
+    const listItem = document.querySelector(".gallery-item:first-child");
+    const itemHeight = listItem.getBoundingClientRect().height;
+    
+    try {
+        page += 1;
+        const { data: { hits, totalHits }, } = await searchImg(q, page);
+        const totalPage = Math.ceil(totalHits / per_page);
+        
+        pageLoadImg.style.display = "block";
+        pageGallery.insertAdjacentHTML("beforeend", renderImg(hits));
+        lightbox.refresh();
+    
+        if (page === totalPage) {
+            pageLoadImg.style.display = "none";
+            return iziToast.info({
+                position: "bottomRight",
+                message: `We're sorry, but you've reached the end of search results.`,
+            });
+        }
+    } catch (error) { console.log(error); }
+    
+    finally {
+        pageLoaderBottom.style.display = "none";
+        window.scrollBy({
+            top: 2 * itemHeight,
+            behavior: "smooth",
+        });
+    }
 }
