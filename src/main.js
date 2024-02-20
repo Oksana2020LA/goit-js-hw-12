@@ -36,8 +36,9 @@ async function onSubmit(event) {
     if (!q) {
     pageGallery.innerHTML = '';
     iziToast.info({
-    position: "topRight",
-    message: `Error enter any symbols`,
+        position: "topRight",
+        message: `Error enter any symbols`,
+        timeout: 2000,
     });
     pageLoaderTop.style.display = "none";
     return;
@@ -55,6 +56,7 @@ async function onSubmit(event) {
     iziToast.success({
     position: "topRight",
     message: `We found ${totalHits} photos`,
+    timeout: 2000,
     });
     pageLoadImg.style.display = "block";
     } else {
@@ -130,10 +132,11 @@ async function loadMore(event) {
             return iziToast.info({
                 position: "bottomRight",
                 message: `We're sorry, but you've reached the end of search results.`,
+                timeout: 2500,
             });
         }
     } catch (error) { console.log(error); }
-    
+
     finally {
         pageLoaderBottom.style.display = "none";
         window.scrollBy({
